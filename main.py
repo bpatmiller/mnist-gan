@@ -101,7 +101,7 @@ def get_mnist_data():
     compose = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize([.5], [.5])])
     return datasets.MNIST(
-        root='./out_dir',
+        root='./data',
         train=True,
         transform=compose,
         download=True)
@@ -166,9 +166,8 @@ def main():
 
                 t.update(1)
                 # output samples
-                if epoch % 10 == 0:
-                    sample_images = vecs_to_imgs(generator(sample_noise)).data
-                    save_images(sample_images)
+                sample_images = vecs_to_imgs(generator(sample_noise)).data
+                save_images(sample_images, epoch, num_example_samples)
 
 
 if __name__ == '__main__':
