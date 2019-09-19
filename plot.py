@@ -4,9 +4,9 @@ import torchvision.utils as vutils
 import torch
 
 
-def save_images(images, epoch, num_images):
+def save_images(images, epoch, batch_number, num_images):
     out_dir = './images'
-    img_name = 'sample_{}'.format(epoch)
+    img_name = 'sample_{}-{}'.format(epoch, batch_number)
 
     if type(images) == np.ndarray:
         images = torch.from_numpy(images)

@@ -166,8 +166,9 @@ def main():
 
                 t.update(1)
                 # output samples
-                sample_images = vecs_to_imgs(generator(sample_noise)).data
-                save_images(sample_images, epoch, num_example_samples)
+                if batch_number % 100 == 0:
+                    sample_images = vecs_to_imgs(generator(sample_noise)).data
+                    save_images(sample_images, epoch, batch_number, num_example_samples)
 
 
 if __name__ == '__main__':
