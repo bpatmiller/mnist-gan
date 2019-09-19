@@ -2,12 +2,8 @@ import torch
 from torch import nn, optim
 from torch.autograd.variable import Variable
 from torchvision import transforms, datasets
-import util
-
-num_epochs = 250
-batch_size = 100
-img_width = 28
-img_height = 28
+from plot import save_images
+from tqdm import tqdm
 
 
 class DiscriminatorNet(torch.nn.Module):
@@ -69,6 +65,7 @@ class GeneratorNet(torch.nn.Module):
         x = self.out(x)
         return x
 
+
 def train_discriminator(discriminator, optimizer, loss, real_data, fake_data):
     size = real_data.size(0)
     optimizer.zero_grad()
@@ -84,6 +81,7 @@ def train_discriminator(discriminator, optimizer, loss, real_data, fake_data):
     optimizer.step()
 
     return error_real + error_fake, pred_real, pred_fake
+
 
 def train_generator(discriminator, generator, optimizer, loss, fake_data):
     size = fake_data.size(0)
@@ -101,7 +99,7 @@ def train_generator(discriminator, generator, optimizer, loss, fake_data):
 def get_mnist_data():
     """download and normalize nmist dataset"""
     compose = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((.5, .5, .5), (.5, .5, .5))])
+        [transforms.ToTensor(), transforms.Normalize([.5], [.5])])
     return datasets.MNIST(
         root='./out_dir',
         train=True,
@@ -131,12 +129,13 @@ def zeros(size):
 
 
 def main():
+    num_epochs = 250
     num_example_samples = 16
     sample_noise = noise(num_example_samples)
 
     dataset = get_mnist_data()
     dataset_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=True)
+        dataset, batch_size=100, shuffle=True)
     num_batches = len(dataset_loader)
 
     discriminator = DiscriminatorNet()
@@ -149,22 +148,28 @@ def main():
 
     # train the model and output generated images
     for epoch in range(num_epochs):
-        for batch_number, (real_batch, _) in enumerate(dataset_loader):
-            size = real_batch.size(0)
+        print("training epoch {:d}".format(epoch))
+        with tqdm(total=num_batches) as t:
+            for batch_number, (real_batch, _) in enumerate(dataset_loader):
+                size = real_batch.size(0)
 
-            # train discriminator
-            real_data = Variable(imgs_to_vecs(real_batch))
-            fake_data = generator(noise(size)).detach()
-            discrim_error, discrim_pred_real, discrim_pred_fake = train_discriminator(discriminator, discrim_optimizer, loss, real_data, fake_data)
+                # train discriminator
+                real_data = Variable(imgs_to_vecs(real_batch))
+                fake_data = generator(noise(size)).detach()
+                discrim_error, discrim_pred_real, discrim_pred_fake = train_discriminator(
+                    discriminator, discrim_optimizer, loss, real_data, fake_data)
 
-            # train generator
-            fake_data = generator(noise(size))
-            gen_error = train_generator(discriminator, generator, gen_optimizer, loss, fake_data)
+                # train generator
+                fake_data = generator(noise(size))
+                gen_error = train_generator(
+                    discriminator, generator, gen_optimizer, loss, fake_data)
 
-            # output samples
-            if epoch % 10 == 0:
-                sample_images = vecs_to_imgs(generator(sample_noise)).data
-                save_images(sample_images)
+                t.update(1)
+                # output samples
+                if epoch % 10 == 0:
+                    sample_images = vecs_to_imgs(generator(sample_noise)).data
+                    save_images(sample_images)
+
 
 if __name__ == '__main__':
     main()
