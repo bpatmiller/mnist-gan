@@ -4,6 +4,7 @@ from torch.autograd.variable import Variable
 from torchvision import transforms, datasets
 from plot import save_images
 from tqdm import tqdm
+import pickle
 
 
 class DiscriminatorNet(torch.nn.Module):
@@ -48,7 +49,8 @@ class GeneratorNet(torch.nn.Module):
         super(GeneratorNet, self).__init__()
         num_features = 100
         num_out = 28 * 28
-
+        
+        self.epoch = 0
         self.layer0 = nn.Sequential(
             nn.Linear(
                 num_features,
@@ -129,6 +131,7 @@ def zeros(size):
 
 
 def main():
+    start_epoch = 0
     num_epochs = 250
     num_example_samples = 16
     sample_noise = noise(num_example_samples)
@@ -138,8 +141,16 @@ def main():
         dataset, batch_size=100, shuffle=True)
     num_batches = len(dataset_loader)
 
-    discriminator = DiscriminatorNet()
-    generator = GeneratorNet()
+    try:
+        with open('discriminator.obj', 'rb') as f:
+            discriminator = pickle.load(f)
+        with open('generator.obj', 'rb') as f:
+            generator = pickle.load(f)
+        start_epoch = generator.epoch
+        print('GAN loaded from file, starting at epoch {}'.format(start_epoch))
+    except:
+        discriminator = DiscriminatorNet()
+        generator = GeneratorNet()
 
     discrim_optimizer = optim.Adam(discriminator.parameters(), lr=0.0002)
     gen_optimizer = optim.Adam(generator.parameters(), lr=0.0002)
@@ -147,7 +158,7 @@ def main():
     loss = nn.BCELoss()
 
     # train the model and output generated images
-    for epoch in range(num_epochs):
+    for epoch in range(start_epoch, num_epochs):
         print("training epoch {:d}".format(epoch))
         with tqdm(total=num_batches) as t:
             for batch_number, (real_batch, _) in enumerate(dataset_loader):
@@ -169,6 +180,12 @@ def main():
                 if batch_number % 100 == 0:
                     sample_images = vecs_to_imgs(generator(sample_noise)).data
                     save_images(sample_images, epoch, batch_number, num_example_samples)
+        
+        generator.epoch += 1
+        with open('discriminator.obj', 'wb') as f:
+            pickle.dump(discriminator, f)
+        with open('generator.obj', 'wb') as f:
+            pickle.dump(generator, f)
 
 
 if __name__ == '__main__':
