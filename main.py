@@ -49,7 +49,7 @@ class GeneratorNet(torch.nn.Module):
         super(GeneratorNet, self).__init__()
         num_features = 100
         num_out = 28 * 28
-        
+
         self.epoch = 0
         self.layer0 = nn.Sequential(
             nn.Linear(
@@ -148,7 +148,7 @@ def main():
             generator = pickle.load(f)
         start_epoch = generator.epoch
         print('GAN loaded from file, starting at epoch {}'.format(start_epoch))
-    except:
+    except BaseException:
         discriminator = DiscriminatorNet()
         generator = GeneratorNet()
 
@@ -179,8 +179,12 @@ def main():
                 # output samples
                 if batch_number % 100 == 0:
                     sample_images = vecs_to_imgs(generator(sample_noise)).data
-                    save_images(sample_images, epoch, batch_number, num_example_samples)
-        
+                    save_images(
+                        sample_images,
+                        epoch,
+                        batch_number,
+                        num_example_samples)
+
         generator.epoch += 1
         with open('discriminator.obj', 'wb') as f:
             pickle.dump(discriminator, f)
