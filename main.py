@@ -132,7 +132,7 @@ def zeros(size):
 
 def main():
     start_epoch = 0
-    num_epochs = 250
+    num_epochs = 200
     num_example_samples = 16
     sample_noise = noise(num_example_samples)
 
@@ -146,6 +146,8 @@ def main():
             discriminator = pickle.load(f)
         with open('generator.obj', 'rb') as f:
             generator = pickle.load(f)
+        with open('noise.obj', 'rb') as f:
+            sample_noise = pickle.load(f)
         start_epoch = generator.epoch
         print('GAN loaded from file, starting at epoch {}'.format(start_epoch))
     except BaseException:
@@ -157,6 +159,9 @@ def main():
 
     loss = nn.BCELoss()
 
+    # save the sample noise for consistency when pausing/resuming
+    with open('noise.obj', 'wb') as f:
+        pickle.dump(sample_noise, f)
     # train the model and output generated images
     for epoch in range(start_epoch, num_epochs):
         print("training epoch {:d}".format(epoch))
