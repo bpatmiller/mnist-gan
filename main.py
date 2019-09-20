@@ -5,6 +5,7 @@ from torchvision import transforms, datasets
 from plot import save_images
 from tqdm import tqdm
 import pickle
+from random import randint
 
 
 class DiscriminatorNet(torch.nn.Module):
@@ -121,7 +122,6 @@ def noise(size):
     """returns a vector of gaussian random numbers"""
     return Variable(torch.randn(size, 100))
 
-
 def ones(size):
     return Variable(torch.ones(size, 1))
 
@@ -195,6 +195,36 @@ def main():
             pickle.dump(discriminator, f)
         with open('generator.obj', 'wb') as f:
             pickle.dump(generator, f)
+
+    print('{0}done training\n{0}'.format(10*'-'+'\n'))
+
+    def valid_noise():
+        x = noise(1)
+        print('finding a valid point in latent space... ', end='')
+        while discriminator(generator(x))[0][0].item() < 0.9:
+            x = noise(1)
+        print('done')
+        return x
+
+    # now show a sweep through the 100-dimension latent space
+    num_steps = 30
+    num_points = 10
+
+    x2 = valid_noise()
+    for point in range(num_points):
+        x1 = x2
+        x2 = valid_noise()
+        delta = (x2 - x1) / float(num_steps)
+        for step in range(num_steps):
+            sweep_image = vecs_to_imgs(generator(x1)).data
+            save_images(
+                sweep_image,
+                point,
+                step,
+                1,
+                out_dir='./sweep_images'
+            )
+            x1 += delta
 
 
 if __name__ == '__main__':

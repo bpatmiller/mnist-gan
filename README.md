@@ -1,7 +1,7 @@
 ### Todo
 
 - [x] change numbering for images
-- [ ] create webm animation of training process
+- [x] create webm animation of training process
 - [ ] add visualization for latent space sweep
 
 ### Resources
